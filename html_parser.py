@@ -1,4 +1,5 @@
 import json
+import traceback
 from bs4 import BeautifulSoup
 
 # загрузить HTML-страницу
@@ -20,23 +21,23 @@ data = []
 # перебрать все таблицы
 for day_table in day_tables:
     try:
-        day = day_table.attrs['id']
+        day = day_table.find('th', {'class': 'day'}).find('span').text
     except:
         continue
     # найти все строки таблицы
     rows = day_table.find_all('tr')
     # пропустить первую строку (заголовок)
-    for row in rows[1:]:
+    for row in rows:
         # извлечь данные из столбцов
         try:
-            time = row.find('td', {'class': 'time'}).text.strip()
-            room = row.find('td', {'class': 'room'}).text.strip()
-            lesson = row.find('td', {'class': 'lesson'}).text.strip()
+            time = row.find('td', {'class': 'time'}).text.strip().split('\n')[:2]
+            room = row.find('td', {'class': 'room'}).text.strip().split('\n')
+            lesson = list(map(str.strip, row.find('td', {'class': 'lesson'}).text.strip().split('\n')))
             # создать словарь с данными
             item = {'day': day, 'time': time, 'room': room, 'lesson': lesson}
             # добавить словарь в список
             data.append(item)
-        except:
+        except Exception as e:
             pass
 
 # сохранить данные в JSON-файл
