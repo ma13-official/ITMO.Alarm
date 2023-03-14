@@ -1,6 +1,7 @@
 import json
 import traceback
 from bs4 import BeautifulSoup
+import requests
 
 # загрузить HTML-страницу
 with open('index.html', 'r', encoding='utf-8') as f:
