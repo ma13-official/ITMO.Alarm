@@ -35,12 +35,12 @@ class Day:
 
 class TimeTable:
     def __init__(self, number, week_num):
-        self.Parser = HTMLParser(number, week_num)
+        HTMLParser_Interface.get_schedule_n(number)
         self.data = self.input_data()
         self.week = self.create_week(week_num)
 
     def input_data(self):
-        path = 'data.json'
+        path = 'data_n.json'
         with open(path, 'r', encoding='utf-8') as f:
             self.data = json.loads(f.read())
         return self.data
@@ -61,7 +61,7 @@ class TimeTable:
                 print(s.classes[lesson].time, s.classes[lesson].name)
 
 
-tets = TimeTable("K32202", 3)
+tets = TimeTable("K32201", 6)
 tets.input_data()
 tets.output_data()
 

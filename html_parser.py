@@ -164,7 +164,7 @@ class HTMLParser_Interface(HTMLParser):
         # print(day_tables)
         data = cls.day_tables_work(day_tables, True, number, teacher)
         # print(data)
-        data = [f'Пример запроса с параметрами {teacher} и {number}'] + data
+        # data = [f'Пример запроса с параметрами {teacher} и {number}'] + data
 
         name = 'data_tn.json'
         cls.save_json(data, name)
@@ -179,11 +179,11 @@ class HTMLParser_Interface(HTMLParser):
  
         data = cls.day_tables_work(day_tables)
 
-        data = [f'Пример запроса с параметром {number}', f'Номер текущей недели: {cur_week_number}'] + data
+        # data = [f'Пример запроса с параметром {number}', f'Номер текущей недели: {cur_week_number}'] + data
 
         name = 'data_n.json'
         cls.save_json(data, name)
 
 
-HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
-HTMLParser_Interface.get_schedule_n('K32201')
+# HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
+# HTMLParser_Interface.get_schedule_n('K32201')
