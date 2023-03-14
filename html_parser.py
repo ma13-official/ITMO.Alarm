@@ -7,12 +7,12 @@ from bs4 import BeautifulSoup
 
 class HTMLParser:
     # def __init__(number) -> None:
-        # logging.basicConfig(level=logging.INFO, filename="py_log.log",filemode="w",
-        #                     format="%(asctime)s %(levelname)s %(message)s")
-        # html = HTMLParser.get_html(number)
-        # json = HTMLParser.parse_html(html)
-        # HTMLParser.save_json(json)
-        
+    # logging.basicConfig(level=logging.INFO, filename="py_log.log",filemode="w",
+    #                     format="%(asctime)s %(levelname)s %(message)s")
+    # html = HTMLParser.get_html(number)
+    # json = HTMLParser.parse_html(html)
+    # HTMLParser.save_json(json)
+
     def create_url(request, teacher_surname_or_not=False):
         # URL страницы, которую нужно получить
         url = f'https://itmo.ru/ru/schedule/{int(teacher_surname_or_not)}/{request}/'
@@ -30,7 +30,7 @@ class HTMLParser:
         html = response.content
 
         return html
-    
+
     def get_teacher_schedule_html(html):
         # создать объект BeautifulSoup
         soup = BeautifulSoup(html, 'html.parser')
@@ -43,7 +43,6 @@ class HTMLParser:
         url = f'https://itmo.ru/ru/schedule/{end_url}'
 
         return HTMLParser.get_html(url)
-
 
     def get_day_tables(html):
         # создать объект BeautifulSoup
@@ -60,7 +59,6 @@ class HTMLParser:
 
         return day_tables, cur_week
 
-        
     def day_tables_work(day_tables, teacher_schedule_check=False, number='', teacher=''):
         # создать список для хранения данных
         data = []
@@ -87,7 +85,7 @@ class HTMLParser:
                     time_field_parsed = time_field.text.strip().split('\n')[:2]
                 else:
                     time_field_parsed = ['', '']
-                
+
                 room_field = row.find('td', {'class': 'room'})
                 if room_field is not None:
                     room_field_parsed = room_field.text.strip().split('\n')
@@ -101,13 +99,13 @@ class HTMLParser:
                             room_field_parsed = ['', '']
                 else:
                     room_field_parsed = ['', '']
-                
+
                 lesson_field = row.find('td', {'class': 'lesson'})
                 if lesson_field is not None:
                     lesson_field_parsed = list(map(str.strip, lesson_field.text.strip().split('\n')))
                 else:
                     lesson_field_parsed = ['()', '']
-                
+
                 lesson_format = row.find('td', {'class': 'lesson-format'})
                 if lesson_format is not None:
                     lesson_format_parsed = lesson_format.text.strip()
@@ -128,10 +126,10 @@ class HTMLParser:
                 if not teacher_schedule_check:
                     teacher = lesson_field_parsed[1].strip()
 
-                item = {'day': day, 'time': time, 'weeks': weeks, 'type_week': type_week, 'room': room, 
-                        'address': address, 'lesson': lesson, 'type_lesson': type_lesson, 'teacher': teacher, 
+                item = {'day': day, 'time': time, 'weeks': weeks, 'type_week': type_week, 'room': room,
+                        'address': address, 'lesson': lesson, 'type_lesson': type_lesson, 'teacher': teacher,
                         'lesson_format': lesson_format_parsed}
-                
+
                 # добавить словарь в список
                 data.append(item)
                 pass
@@ -146,6 +144,7 @@ class HTMLParser:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
         logging.info(f'JSON saved in {name}')
+
 
 class HTMLParser_Interface(HTMLParser):
     @classmethod
@@ -185,7 +184,6 @@ class HTMLParser_Interface(HTMLParser):
         name = 'data_n.json'
         cls.save_json(data, name)
 
-    
 
 HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
 HTMLParser_Interface.get_schedule_n('K32201')
