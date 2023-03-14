@@ -35,7 +35,7 @@ class Day:
 
 class TimeTable:
     def __init__(self, number, week_num):
-        self.Parser = HTMLParser(number)
+        self.Parser = HTMLParser(number, week_num)
         self.data = self.input_data()
         self.week = self.create_week(week_num)
 
