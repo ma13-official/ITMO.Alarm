@@ -18,7 +18,7 @@ class HTMLParser():
         url = 'https://itmo.ru/ru/schedule/0/'
 
         # URL страницы, которую нужно получить
-        number_url = url + number.replac + '/'
+        number_url = url + number + '/'
 
         # Отправляем запрос к сайту и получаем ответ
         response = requests.get(number_url)
@@ -90,4 +90,4 @@ class HTMLParser():
 
         logging.info(f'JSON saved in {name}')
 
-HTMLParser('АЯ-B1.2/13')
+pars = HTMLParser('K32201')
