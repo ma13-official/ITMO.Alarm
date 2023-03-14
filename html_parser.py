@@ -52,7 +52,7 @@ class HTMLParser:
         day_tables = soup.find_all('table', {'class': 'rasp_tabl'})
 
         schedule_week = soup.find('h2', {'class': 'schedule-week'})
-        if schedule_week.text != '':
+        if schedule_week is not None:
             cur_week = ''.join(filter(str.isdigit, schedule_week.text.split('.')[1])) # оставить только номер текущей недели
         else:
             cur_week = ''
@@ -176,7 +176,7 @@ class HTMLParser_Interface(HTMLParser):
         html = cls.get_html(url)
         # print(html)
         day_tables, cur_week_number = cls.get_day_tables(html)
-        print(cur_week_number)
+ 
         data = cls.day_tables_work(day_tables)
 
         data = [f'Пример запроса с параметром {number}', f'Номер текущей недели: {cur_week_number}'] + data
