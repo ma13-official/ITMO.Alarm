@@ -7,6 +7,7 @@ csc = Cascade()
 
 
 @csc.add_handler(priority=10, regexp='(hello|hi|привет|здравствуй)')
+@csc.add_handler(priority=10, intents=['start'])
 # @csc.add_handler(priority=3, checker=is_new_session)
 def hello(turn: DialogTurn):
     turn.response_text = 'Привет! Вы в навыке ITMO Alarm, которое поможет вам настроить ' \
@@ -24,6 +25,33 @@ def do_help(turn: DialogTurn):
     turn.suggests.append('Выход')
 
 
+@csc.add_handler(priority=10, intents=['group'])
+def add_group(turn: DialogTurn):
+    turn.response_text = 'Отлично, я добавила основные предметы. Давайте разберемся с предметами по выбору.' \
+                         ' Вы мне называете поток, а я отвечаю, нашла ли его в расписании. Приступим:'
+
+
+@csc.add_handler(priority=10, intents=['stop'])
+def answer_not_found_group(turn: DialogTurn):
+    turn.response_text = 'Не могу найти расписание этой группы. Попробуйте еще раз.'
+
+
+@csc.add_handler(priority=10, intents=['not_from_itmo'])
+def answer_not_itmo_student(turn: DialogTurn):
+    turn.response_text = 'Извините, я умею ставить будильники только для студентов университета ИТМО.'
+    turn.suggests.append('Выход')
+
+
+@csc.add_handler(priority=10, intents=['stream'])
+def add_stream(turn: DialogTurn):
+    turn.response_text = 'Поток найден. Добавила в расписание. Продолжить?'
+
+
+@csc.add_handler(priority=10, intents=['stop'])
+def answer_not_found_stream(turn: DialogTurn):
+    turn.response_text = 'Не могу найти этот поток. Давайте попробуем еще раз'
+
+
 @csc.add_handler(priority=10, intents=['total_exit'])
 def total_exit(turn: DialogTurn):
     turn.response_text = 'Была рада помочь!' \
@@ -34,7 +62,7 @@ def total_exit(turn: DialogTurn):
 
 @csc.add_handler(priority=1)
 def fallback(turn: DialogTurn):
-    turn.response_text = 'Я вас не поняла. Скажите мне "Привет"!'
+    turn.response_text = 'Я вас не поняла. Повторите еще раз'
     turn.suggests.append('привет')
 
 
