@@ -52,7 +52,13 @@ class HTMLParser:
         # найти все таблицы с классом "rasp-tabl-day"
         day_tables = soup.find_all('table', {'class': 'rasp_tabl'})
 
-        return day_tables
+        schedule_week = soup.find('h2', {'class': 'schedule-week'})
+        if schedule_week.text != '':
+            cur_week = ''.join(filter(str.isdigit, schedule_week.text.split('.')[1])) # оставить только номер текущей недели
+        else:
+            cur_week = ''
+
+        return day_tables, cur_week
 
         
     def day_tables_work(day_tables, teacher_schedule_check=False, number='', teacher=''):
@@ -155,7 +161,7 @@ class HTMLParser_Interface(HTMLParser):
         url = cls.create_url(teacher, True)
         html = cls.get_html(url)
         schedule_html = cls.get_teacher_schedule_html(html)
-        day_tables = cls.get_day_tables(schedule_html)
+        day_tables, cur_week_number = cls.get_day_tables(schedule_html)
         # print(day_tables)
         data = cls.day_tables_work(day_tables, True, number, teacher)
         # print(data)
@@ -170,15 +176,16 @@ class HTMLParser_Interface(HTMLParser):
         # print(url)
         html = cls.get_html(url)
         # print(html)
-        day_tables = cls.get_day_tables(html)
+        day_tables, cur_week_number = cls.get_day_tables(html)
+        print(cur_week_number)
         data = cls.day_tables_work(day_tables)
 
-        data = [f'Пример запроса с параметром  {number}'] + data
+        data = [f'Пример запроса с параметром {number}', f'Номер текущей недели: {cur_week_number}'] + data
 
         name = 'data_n.json'
         cls.save_json(data, name)
 
     
 
-# HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
+HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
 HTMLParser_Interface.get_schedule_n('K32201')
