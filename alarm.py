@@ -23,6 +23,7 @@ class Alarm:
 
     def create_alarms(self):
         alarms = {}
+        alarms["id"] = self.data['id']
         for key in self.week.keys():
             all_alarms = []
             day = []
