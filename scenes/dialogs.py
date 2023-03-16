@@ -6,9 +6,22 @@ from dialogic.cascade import DialogTurn, Cascade
 csc = Cascade()
 
 
+def is_single_pass(turn: DialogTurn) -> bool:
+    """ Check that a command is passed when the skill is activated """
+    if not turn.ctx.yandex:
+        return False
+    if not turn.ctx.yandex.session.new:
+        return False
+    return bool(turn.ctx.yandex.request.command)
+
+
+def is_new_session(turn: DialogTurn):
+    return turn.ctx.session_is_new() or not turn.text
+
+
 @csc.add_handler(priority=10, regexp='(hello|hi|привет|здравствуй)')
 @csc.add_handler(priority=10, intents=['start'])
-# @csc.add_handler(priority=3, checker=is_new_session)
+@csc.add_handler(priority=3, checker=is_new_session)
 def hello(turn: DialogTurn):
     turn.response_text = 'Привет! Вы в навыке ITMO Alarm, которое поможет вам настроить ' \
                          'будильники под ваше учебное расписание' \
@@ -67,7 +80,11 @@ def fallback(turn: DialogTurn):
 
 
 dm = TurnDialogManager(cascade=csc)
-connector = DialogConnector(dialog_manager=dm)
+connector = DialogConnector(
+    dialog_manager=dm,
+    alice_native_state='session')
+handler = connector.serverless_alice_handler
+
 server = FlaskServer(connector=connector)
 
 if __name__ == '__main__':
