@@ -12,5 +12,5 @@
 - Python 3.11
 - Flask
 - venv
-- dialogs framework
+- dialogic framework
 - PostgreSQL
