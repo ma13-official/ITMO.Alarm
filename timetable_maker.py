@@ -56,8 +56,8 @@ class TimeTable:
         return self.data
 
     def create_week(self, week_num):
-        week = {'Пн': Day('Пн'), 'Вт': Day('Вт'), 'Ср': Day('Ср'), 'Чт': Day('Чт'), 'Пт': Day('Пт'), 'Сб': Day('Сб'),
-                'Вс': Day('Вс')}
+        week = {'mon': Day('mon'), 'tue': Day('tue'), 'wen': Day('wen'), 'th': Day('th'), 'fri': Day('fri'),
+                'sat': Day('sat'), 'sun': Day('sun')}
         for i in self.data:
             weeks = i['weeks'].replace(' ', '').split(',')
             if str(week_num) in weeks:
