@@ -13,12 +13,14 @@ class HTMLParser:
     # json = HTMLParser.parse_html(html)
     # HTMLParser.save_json(json)
 
+    @staticmethod
     def create_url(request, teacher_surname_or_not=False):
         # URL страницы, которую нужно получить
         url = f'https://itmo.ru/ru/schedule/{int(teacher_surname_or_not)}/{request}/'
 
         return url
 
+    @staticmethod
     def get_html(url):
         # Отправляем запрос к сайту и получаем ответ
         response = requests.get(url)
@@ -31,6 +33,7 @@ class HTMLParser:
 
         return html
 
+    @staticmethod
     def get_teacher_schedule_html(html):
         # создать объект BeautifulSoup
         soup = BeautifulSoup(html, 'html.parser')
@@ -44,6 +47,12 @@ class HTMLParser:
 
         return HTMLParser.get_html(url)
 
+    @staticmethod
+    def check_html(html):
+        check = BeautifulSoup(html, 'html.parser').find('article', {'class': 'content_block'})
+        return 'Расписание не найдено' in check.text
+
+    @staticmethod
     def get_day_tables(html):
         # создать объект BeautifulSoup
         soup = BeautifulSoup(html, 'html.parser')
@@ -53,18 +62,20 @@ class HTMLParser:
 
         schedule_week = soup.find('h2', {'class': 'schedule-week'})
         if schedule_week is not None:
-            cur_week = ''.join(filter(str.isdigit, schedule_week.text.split('.')[1])) # оставить только номер текущей недели
+            cur_week = ''.join(
+                filter(str.isdigit, schedule_week.text.split('.')[1]))  # оставить только номер текущей недели
         else:
             cur_week = ''
 
         return day_tables, cur_week
 
+    @staticmethod
     def day_tables_work(day_tables, teacher_schedule_check=False, number='', teacher=''):
         # создать список для хранения данных
         data = []
 
         # перебрать все таблицы
-        for i, day_table in enumerate(day_tables):
+        for day_table in day_tables:
             # print(day_table)
             try:
                 day = day_table.find('th', {'class': 'day'}).find('span').text
@@ -109,6 +120,8 @@ class HTMLParser:
                 lesson_format = row.find('td', {'class': 'lesson-format'})
                 if lesson_format is not None:
                     lesson_format_parsed = lesson_format.text.strip()
+                else:
+                    lesson_format_parsed = ''
 
                 if teacher_schedule_check:
                     group = row.find('td', {'class': False}).text.strip()
@@ -137,6 +150,33 @@ class HTMLParser:
         logging.info('Parsed HTML to JSON.')
         return list({tuple(d.items()): d for d in data}.values())
 
+    @staticmethod
+    def check_number(day_tables, number):
+        count = 0
+        # перебрать все таблицы
+        for day_table in day_tables:
+            # print(day_table)
+            try:
+                day = day_table.find('th', {'class': 'day'}).find('span').text
+            except:
+                continue
+            # найти все строки таблицы
+            rows = day_table.find_all('tr')
+            rows = day_table.find_all('tbody') + rows
+            # print(rows)
+
+            for row in rows:
+                row_find = row.find('td', {'class': False})
+                if row_find is not None:
+                    group = row_find.text.strip()
+                    if group != number:
+                        continue
+                    else:
+                        count += 1
+
+        return count == 0
+
+    @staticmethod
     def save_json(data, name):
 
         # сохранить данные в JSON-файл
@@ -146,11 +186,11 @@ class HTMLParser:
         logging.info(f'JSON saved in {name}')
 
 
-class HTMLParser_Interface(HTMLParser):
+class HTMLParserInterface(HTMLParser):
     @classmethod
     def get_schedule_tn(cls, teacher, number):
         """
-        Возвращает информацию о расписанию по преподавателю и номеру группы(потока).
+        Возвращает информацию по расписанию по преподавателю и номеру группы(потока).
 
         Args:
             teacher (_type_): ФИО учителя(предпочтительно)
@@ -164,10 +204,10 @@ class HTMLParser_Interface(HTMLParser):
         # print(day_tables)
         data = cls.day_tables_work(day_tables, True, number, teacher)
         # print(data)
-        data = [f'Пример запроса с параметрами {teacher} и {number}'] + data
-
-        name = 'data_tn.json'
-        cls.save_json(data, name)
+        # data = [f'Пример запроса с параметрами {teacher} и {number}'] + data
+        return data
+        # name = 'data_tn.json'
+        # cls.save_json(data, name)
 
     @classmethod
     def get_schedule_n(cls, number):
@@ -176,14 +216,72 @@ class HTMLParser_Interface(HTMLParser):
         html = cls.get_html(url)
         # print(html)
         day_tables, cur_week_number = cls.get_day_tables(html)
- 
+
         data = cls.day_tables_work(day_tables)
 
-        data = [f'Пример запроса с параметром {number}', f'Номер текущей недели: {cur_week_number}'] + data
+        # data = [f'Пример запроса с параметром {number}', f'Номер текущей недели: {cur_week_number}'] + data
+        return data
+        # name = 'data_n.json'
+        # cls.save_json(data, name)
 
-        name = 'data_n.json'
-        cls.save_json(data, name)
+    @classmethod
+    def create_schedule(cls):
+        teacher = ''
+        study_group = cls.get_input('номер учебной группы')
+        data = cls.get_schedule_n(study_group)
+        while teacher != 'stop':
+            teacher = cls.get_input('ФИО преподавателя')
+            if teacher == 'stop':
+                break
+            number = cls.get_input('поток', teacher)
+            data += cls.get_schedule_tn(teacher, number)
+        cls.save_json(data, 'test1.json')
+
+    @classmethod
+    def get_input(cls, template, teacher=''):
+        if template == 'номер учебной группы':
+            study_group = input(f'Введите {template}')
+
+            url = cls.create_url(study_group)
+            html = cls.get_html(url)
+
+            if cls.check_html(html):
+                print(f'Неверный {template}')
+                cls.get_input(template)
+            else:
+                return study_group
+
+        elif template == 'поток':
+            number = input(f'Введите {template}')
+            if teacher == 'stop':
+                return 'stop'
+
+            url = cls.create_url(teacher, True)
+            html = cls.get_html(url)
+            schedule_html = cls.get_teacher_schedule_html(html)
+            day_tables, cur_week_number = cls.get_day_tables(schedule_html)
+
+            if cls.check_number(day_tables, number):
+                print(f'Неверный {template}')
+                cls.get_input(template)
+            else:
+                return number
+
+        elif template == 'ФИО преподавателя':
+            teacher = input(f'Введите {template}')
+            if teacher == 'stop':
+                return 'stop'
+
+            url = cls.create_url(teacher, True)
+            html = cls.get_html(url)
+            schedule_html = cls.get_teacher_schedule_html(html)
+
+            if cls.check_html(schedule_html):
+                print('Нет преподавателя с таким ФИО')
+                cls.get_input(template)
+            else:
+                return teacher
 
 
-HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
-HTMLParser_Interface.get_schedule_n('K32201')
+# HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
+# HTMLParserInterface.create_schedule()
