@@ -1,3 +1,5 @@
+import string
+
 from pony.orm import *
 
 db = Database()
@@ -27,8 +29,9 @@ class SettingAlarm(db.Entity):
 
 
 class User(db.Entity):
-    id = PrimaryKey(int, nullable=False)
-    tg_id = Optional(int)
+    id = PrimaryKey(int, auto=True)
+    yandex_id = Required(str)
+    tg_id = Optional(str)
     alarms = Set("SettingAlarm")
     schedule = Optional("Schedule")
 
@@ -51,7 +54,7 @@ class PostgresDB:
     def put_week(self, json):
         user = self.find_user_by_id(json["id"])
         if user is None:
-            user = User(id=json["id"])
+            user = User(yandex_id=json["id"])
             Schedule(monday=json['mon'], tuesday=json['tue'], wednesday=json['wed'], thursday=json['th'],
                      friday=json['fri'], saturday=json['sat'], sunday=json['sun'], user=user)
         else:
@@ -65,16 +68,16 @@ class PostgresDB:
             schedule.sunday = json['sun']
 
     @db_session
-    def find_schedule_by_id(self, id_user: int) -> Schedule:
-        return Schedule.get(lambda s: s.user.id == id_user)
+    def find_schedule_by_id(self, id_user: str) -> Schedule:
+        return Schedule.get(lambda s: s.user.yandex_id == id_user)
 
     @db_session
     def put_alarm(self, json):
         user = self.find_alarm_by_id(json["id"])
         if user is None:
-            user = User(id=json["id"])
-            Alarm(preparation_time=json['prep_time'], road_time=json['road_time'],
-                  amount=json["amount"], intervals=json["intervals"], user=user)
+            user = User(yandex_id=json["id"])
+            SettingAlarm(preparation_time=json['prep_time'], road_time=json['road_time'],
+                         amount=json["amount"], intervals=json["intervals"], user=user)
         else:
             alarm = self.find_alarm_by_id(json["id"])
             alarm.preparation_time = json['prep_time']
@@ -95,3 +98,7 @@ class PostgresDB:
     @db_session
     def find_user_by_id(self, id_user: int) -> User:
         return User.get(lambda u: u.id == id_user)
+
+    @db_session
+    def get_full_week(self) -> Schedule:
+        return Schedule.select()
