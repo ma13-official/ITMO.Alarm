@@ -3,6 +3,7 @@ import traceback
 import requests
 import logging
 from bs4 import BeautifulSoup
+from bd.PostgresDB import PostgresDB
 
 
 class HTMLParser:

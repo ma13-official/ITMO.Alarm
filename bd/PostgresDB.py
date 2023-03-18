@@ -101,4 +101,5 @@ class PostgresDB:
 
     @db_session
     def get_full_week(self) -> Schedule:
+
         return Schedule.select()
