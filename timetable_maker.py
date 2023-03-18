@@ -17,6 +17,7 @@ class Lesson:
         self.num = class_num
         class_data.pop('day')
         class_data.pop('weeks')
+        class_data['class_num'] = str(class_num)
         self.data = class_data
 
 
