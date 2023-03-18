@@ -58,3 +58,7 @@ class PostgresDB:
 
     # пример как можно обратить к Schedule и получить время первой пары в понедельник:
     # Schedule.monday[0]["time"]
+
+    @db_session
+    def find_alarm_by_id(self, id_user: int) -> Alarm:
+        return get(a for a in Alarm if a.id == id_user)
