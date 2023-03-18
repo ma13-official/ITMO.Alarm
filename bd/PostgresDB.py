@@ -1,6 +1,3 @@
-import statistics
-from datetime import datetime
-
 from pony.orm import *
 
 db = Database()
@@ -11,7 +8,6 @@ db = Database()
 
 
 class Schedule(db.Entity):
-    id = PrimaryKey(int, nullable=False)
     monday = Optional(Json)
     tuesday = Optional(Json)
     wednesday = Optional(Json)
@@ -19,16 +15,22 @@ class Schedule(db.Entity):
     friday = Optional(Json)
     saturday = Optional(Json)
     sunday = Optional(Json)
+    user = Optional("User")
 
 
 class Alarm(db.Entity):
-    id = PrimaryKey(int, auto=True)
     preparation_time = Required(str)
     road_time = Required(str)
     amount = Required(int)
-    difficulty = Required(str)
-    song = Required(str)
     intervals = Required(str)
+    user = Required("User")
+
+
+class User(db.Entity):
+    id = PrimaryKey(int, nullable=False)
+    tg_id = Optional(int)
+    alarms = Set("Alarm")
+    schedule = Optional("Schedule")
 
 
 """
@@ -36,29 +38,60 @@ class Alarm(db.Entity):
 """
 
 
+# пример как можно обратить к Schedule и получить время первой пары в понедельник:
+# Schedule.monday[0]["time"]
+
 class PostgresDB:
-    def __init__(self, user: str, password: str, host: str):
-        db.bind(provider='postgres', user=f'{user}', password=f'{password}', host=f'{host}', port="6432",
-                database='ITMO_ALARM')
+    def __init__(self, user: str, password: str, host: str, port: str, database: str):
+        db.bind(provider='postgres', user=f'{user}', password=f'{password}', host=f'{host}', port=f"{port}",
+                database=f'{database}')
         db.generate_mapping(create_tables=True)
 
     @db_session
-    def add_new_week(self, json):
-        Schedule(id=json['id'], monday=json['mon'], tuesday=json['tue'], wednesday=json['wen'], thursday=json['th'],
-                 friday=json['fri'], saturday=json['sat'], sunday=json['sun'])
-
-    @db_session
-    def add_new_alarm(self, json):
-        Alarm(preparation_time=json['prep_time'], road_time=json['road_time'], amount=json["amount"],
-              difficulty=json["difficulty"], song=json["song"], intervals=json["intervals"])
+    def put_week(self, json):
+        user = self.find_user_by_id(json["id"])
+        if user is None:
+            user = User(id=json["id"])
+            Schedule(monday=json['mon'], tuesday=json['tue'], wednesday=json['wed'], thursday=json['th'],
+                     friday=json['fri'], saturday=json['sat'], sunday=json['sun'], user=user)
+        else:
+            schedule = self.find_schedule_by_id(json["id"])
+            schedule.monday = json['mon']
+            schedule.tuesday = json['tue']
+            schedule.wednesday = json['wed']
+            schedule.thursday = json['th']
+            schedule.friday = json['fri']
+            schedule.saturday = json['sat']
+            schedule.sunday = json['sun']
 
     @db_session
     def find_schedule_by_id(self, id_user: int) -> Schedule:
-        return get(s for s in Schedule if s.id == id_user)
+        return Schedule.get(lambda s: s.user.id == id_user)
 
-    # пример как можно обратить к Schedule и получить время первой пары в понедельник:
-    # Schedule.monday[0]["time"]
+    @db_session
+    def put_alarm(self, json):
+        user = self.find_alarm_by_id(json["id"])
+        if user is None:
+            user = User(id=json["id"])
+            Alarm(preparation_time=json['prep_time'], road_time=json['road_time'],
+                  amount=json["amount"], intervals=json["intervals"], user=user)
+        else:
+            alarm = self.find_alarm_by_id(json["id"])
+            alarm.preparation_time = json['prep_time']
+            alarm.road_time = json['road_time']
+            alarm.amount = json["amount"]
+            alarm.intervals = json["intervals"]
+
+    @db_session
+    def add_alarm(self, json):
+        user = self.find_alarm_by_id(json["id"])
+        Alarm(preparation_time=json['prep_time'], road_time=json['road_time'],
+              amount=json["amount"], intervals=json["intervals"], user=user)
 
     @db_session
     def find_alarm_by_id(self, id_user: int) -> Alarm:
-        return get(a for a in Alarm if a.id == id_user)
+        return Alarm.get(lambda a: a.user.id == id_user)
+
+    @db_session
+    def find_user_by_id(self, id_user: int) -> User:
+        return User.get(lambda u: u.id == id_user)
