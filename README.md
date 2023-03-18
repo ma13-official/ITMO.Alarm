@@ -9,8 +9,9 @@
 - Установка будильников под расписание
 
 ## Стек технологий
-- Python 3.11
+- Python 3.7
 - Flask
 - venv
 - dialogic framework
 - PostgreSQL
+- Pony ORM
