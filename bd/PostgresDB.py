@@ -18,7 +18,7 @@ class Schedule(db.Entity):
     user = Optional("User")
 
 
-class Alarm(db.Entity):
+class SettingAlarm(db.Entity):
     preparation_time = Required(str)
     road_time = Required(str)
     amount = Required(int)
@@ -29,7 +29,7 @@ class Alarm(db.Entity):
 class User(db.Entity):
     id = PrimaryKey(int, nullable=False)
     tg_id = Optional(int)
-    alarms = Set("Alarm")
+    alarms = Set("SettingAlarm")
     schedule = Optional("Schedule")
 
 
@@ -85,12 +85,12 @@ class PostgresDB:
     @db_session
     def add_alarm(self, json):
         user = self.find_alarm_by_id(json["id"])
-        Alarm(preparation_time=json['prep_time'], road_time=json['road_time'],
-              amount=json["amount"], intervals=json["intervals"], user=user)
+        SettingAlarm(preparation_time=json['prep_time'], road_time=json['road_time'],
+                     amount=json["amount"], intervals=json["intervals"], user=user)
 
     @db_session
-    def find_alarm_by_id(self, id_user: int) -> Alarm:
-        return Alarm.get(lambda a: a.user.id == id_user)
+    def find_alarm_by_id(self, id_user: int) -> SettingAlarm:
+        return SettingAlarm.get(lambda a: a.user.id == id_user)
 
     @db_session
     def find_user_by_id(self, id_user: int) -> User:
