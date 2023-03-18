@@ -69,9 +69,14 @@ class PostgresDB:
         return Schedule.get(lambda s: s.user.id == id_user)
 
     @db_session
-    def update_alarm(self, json):
-        alarm = self.find_alarm_by_id(json["id"])
-        if alarm is not None:
+    def put_alarm(self, json):
+        user = self.find_alarm_by_id(json["id"])
+        if user is None:
+            user = User(id=json["id"])
+            Alarm(preparation_time=json['prep_time'], road_time=json['road_time'],
+                  amount=json["amount"], intervals=json["intervals"], user=user)
+        else:
+            alarm = self.find_alarm_by_id(json["id"])
             alarm.preparation_time = json['prep_time']
             alarm.road_time = json['road_time']
             alarm.amount = json["amount"]
