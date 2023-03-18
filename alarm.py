@@ -5,9 +5,11 @@ from html_parser import *
 
 
 class Alarm:
-    def __init__(self, prep_time, road_time, amount, difficulty, song_name, interval):
+    def __init__(self, prep_time, road_time, amount, difficulty, song_name, interval, data, data_person):
         self.person_data = {"prep_time": str(prep_time), "road_time": str(road_time), "amount": str(amount), "difficulty": str(difficulty), "song": str(song_name), "intervals": str(interval)}
+        # self.person_data = data_person
         self.data = self.data_input()
+        # self.data = self.data_input_n(data)
         self.week = self.alaram_week()
         self.alarms = self.create_alarms()
 
@@ -17,8 +19,15 @@ class Alarm:
             data = json.loads(f.read())
         return data
 
+    def data_input_n(self, data):
+        self.data = data
+
     @abstractmethod
-    def personal_data1(self):
+    def personal_data_input(self, id):
+        pass
+
+    @abstractmethod
+    def database_input(self, id):
         pass
 
     def create_alarms(self):
@@ -107,5 +116,5 @@ class Alarm:
 
 
 
-test = Alarm(prep_time="01:00", road_time="00:30", amount="3", difficulty="0", song_name="Daruda-Sandstorm", interval="00:10")
+test = Alarm(prep_time="01:00", road_time="00:30", amount="3", difficulty="0", song_name="Daruda-Sandstorm", interval="00:10", data=None, data_person=None)
 test.dump_json("test_alarm.json")
