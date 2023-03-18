@@ -12,7 +12,7 @@ class Alarm:
         self.alarms = self.create_alarms()
 
     def data_input(self):
-        path = "test.json"
+        path = "json_templates/test.json"
         with open(path, 'r', encoding='utf-8') as f:
             data = json.loads(f.read())
         return data
