@@ -1,6 +1,7 @@
 from html_parser import *
 import json
 import datetime
+from bd.PostgresDB import PostgresDB
 
 
 class Lesson:
@@ -46,9 +47,10 @@ class Day:
 class TimeTable:
     def __init__(self, number, week_num, data):
         HTMLParserInterface.get_schedule_n(number)
-        self.data = self.input_data()
-        # self.data = self.input_data_n(data)
+        # self.data = self.input_data()
+        self.data = data
         self.week = self.create_week(week_num)
+        self.p = PostgresDB(user="anton", password="anton123", host="rc1b-zaqqd5xitiqlw9d1.mdb.yandexcloud.net", port="6432", database="ITMO_ALARM")
 
     def input_data(self):
         path = 'data_n.json'
@@ -56,14 +58,11 @@ class TimeTable:
             self.data = json.loads(f.read())
         return self.data
 
-    def input_data_n(self, data):
-        self.data = data
-
 
     def create_week(self, week_num):
         week = {'Пн': Day('Пн'), 'Вт': Day('Вт'), 'Ср': Day('Ср'), 'Чт': Day('Чт'), 'Пт': Day('Пт'), 'Сб': Day('Сб'),
                 'Вс': Day('Вс')}
-        # week = {'mon': Day('mon'), 'tue': Day('tue'), 'wen': Day('wen'), 'th': Day('th'), 'fri': Day('fri'), 'sat': Day('sat'),
+        # week = {'mon': Day('mon'), 'tue': Day('tue'), 'wed': Day('wed'), 'th': Day('th'), 'fri': Day('fri'), 'sat': Day('sat'),
         #                 'sun': Day('sun')}
         for i in self.data:
             weeks = i['weeks'].replace(' ', '').split(',')
@@ -71,16 +70,17 @@ class TimeTable:
                 week[i['day']].add_class(i)
         return week
 
-    def output_data(self):
-        output = {'id': "123"}
+    def output_data(self, id):
+        output = {'id': str(id)}
         for key, value in self.week.items():
             lessons = []
             for lesson in value.classes.keys():
                 lessons.append(value.classes[lesson].data)
             output[value.day_num] = lessons
-        HTMLParser.save_json(output, 'test.json')
+        self.p.put_week(output)
+        # HTMLParser.save_json(output, 'test.json')
 
 
-test = TimeTable("K32201", 6, None)
+test = TimeTable("K32201", 6, "123")
 test.input_data()
-test.output_data()
+test.output_data("123")

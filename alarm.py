@@ -5,13 +5,29 @@ from html_parser import *
 
 
 class Alarm:
-    def __init__(self, prep_time, road_time, amount, difficulty, song_name, interval, data, data_person):
-        self.person_data = {"prep_time": str(prep_time), "road_time": str(road_time), "amount": str(amount), "difficulty": str(difficulty), "song": str(song_name), "intervals": str(interval)}
+    def __init__(self, id):
+        self.p = PostgresDB(user="anton", password="anton123", host="rc1b-zaqqd5xitiqlw9d1.mdb.yandexcloud.net", port="6432", database="ITMO_ALARM")
+        self.data = self.p.find_schedule_by_id(id)
+        self.person_data = {"prep_time": "00:30", "road_time": "01:00", "amount": "3", "intervals": "00:10"}
         # self.person_data = data_person
-        self.data = self.data_input()
-        # self.data = self.data_input_n(data)
+        # self.data = self.data_input_n(id)
         self.week = self.alaram_week()
         self.alarms = self.create_alarms()
+
+
+    def put_prep_time(self, prep_time):
+        pass
+
+    def put_road_time(self, road_time):
+        pass
+
+    def put_amount(self, amount):
+        pass
+
+    def put_intervals(self, intervals):
+        pass
+
+
 
     def data_input(self):
         path = "test.json"
@@ -19,15 +35,8 @@ class Alarm:
             data = json.loads(f.read())
         return data
 
-    def data_input_n(self, data):
-        self.data = data
-
     @abstractmethod
     def personal_data_input(self, id):
-        pass
-
-    @abstractmethod
-    def database_input(self, id):
         pass
 
     def create_alarms(self):
@@ -114,7 +123,15 @@ class Alarm:
 
         logging.info(f'JSON saved in {name}')
 
+    def save_personal_info(self):
+        self.p.put_alarm(json=self.person_data)
+
+    def save_alarm(self):
+        self.p.put_week(self.alarms)
 
 
-test = Alarm(prep_time="01:00", road_time="00:30", amount="3", difficulty="0", song_name="Daruda-Sandstorm", interval="00:10", data=None, data_person=None)
+
+test = Alarm(id="12345")
 test.dump_json("test_alarm.json")
+
+
