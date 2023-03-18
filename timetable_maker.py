@@ -50,7 +50,7 @@ class TimeTable:
         self.week = self.create_week(week_num)
 
     def input_data(self):
-        path = 'test1.json'
+        path = 'json_templates/test1.json'
         with open(path, 'r', encoding='utf-8') as f:
             self.data = json.loads(f.read())
         return self.data
