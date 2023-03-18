@@ -25,7 +25,6 @@ class Day:
     def __init__(self, day_data):
         self.day_num = day_data
         self.classes = {}
-
     def add_class(self, day_data):
         time = day_data['time']
         if time == "08:20-09:50":
@@ -45,9 +44,10 @@ class Day:
 
 
 class TimeTable:
-    def __init__(self, number, week_num):
+    def __init__(self, number, week_num, data):
         HTMLParserInterface.get_schedule_n(number)
         self.data = self.input_data()
+        # self.data = self.input_data_n(data)
         self.week = self.create_week(week_num)
 
     def input_data(self):
@@ -55,6 +55,10 @@ class TimeTable:
         with open(path, 'r', encoding='utf-8') as f:
             self.data = json.loads(f.read())
         return self.data
+
+    def input_data_n(self, data):
+        self.data = data
+
 
     def create_week(self, week_num):
         week = {'Пн': Day('Пн'), 'Вт': Day('Вт'), 'Ср': Day('Ср'), 'Чт': Day('Чт'), 'Пт': Day('Пт'), 'Сб': Day('Сб'),
@@ -68,7 +72,7 @@ class TimeTable:
         return week
 
     def output_data(self):
-        output = {'id': 123}
+        output = {'id': "123"}
         for key, value in self.week.items():
             lessons = []
             for lesson in value.classes.keys():
@@ -77,6 +81,6 @@ class TimeTable:
         HTMLParser.save_json(output, 'test.json')
 
 
-test = TimeTable("K32201", 6)
+test = TimeTable("K32201", 6, None)
 test.input_data()
 test.output_data()
