@@ -17,6 +17,7 @@ class Lesson:
         self.num = class_num
         class_data.pop('day')
         class_data.pop('weeks')
+        class_data['class_num'] = str(class_num)
         self.data = class_data
 
 
@@ -45,12 +46,12 @@ class Day:
 
 class TimeTable:
     def __init__(self, number, week_num):
-        # HTMLParserInterface.get_schedule_n(number)
+        HTMLParserInterface.get_schedule_n(number)
         self.data = self.input_data()
         self.week = self.create_week(week_num)
 
     def input_data(self):
-        path = 'json_templates/test1.json'
+        path = 'data_n.json'
         with open(path, 'r', encoding='utf-8') as f:
             self.data = json.loads(f.read())
         return self.data
@@ -58,6 +59,8 @@ class TimeTable:
     def create_week(self, week_num):
         week = {'Пн': Day('Пн'), 'Вт': Day('Вт'), 'Ср': Day('Ср'), 'Чт': Day('Чт'), 'Пт': Day('Пт'), 'Сб': Day('Сб'),
                 'Вс': Day('Вс')}
+        # week = {'mon': Day('mon'), 'tue': Day('tue'), 'wen': Day('wen'), 'th': Day('th'), 'fri': Day('fri'), 'sat': Day('sat'),
+        #                 'sun': Day('sun')}
         for i in self.data:
             weeks = i['weeks'].replace(' ', '').split(',')
             if str(week_num) in weeks:
