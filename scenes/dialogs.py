@@ -23,7 +23,6 @@ def is_new_session(turn: DialogTurn):
 
 @csc.add_handler(priority=1, intents=['help'])
 def do_help(turn: DialogTurn):
-    print(turn.ctx.user_id)
 
     turn.response_text = 'Помогаю! Вы в навыке ITMO Alarm, который поможет вам настроить будильники под ваше учебное расписание. ' \
                          'Назовите вашу учебную группу, а я начну строить ваше расписание' \
