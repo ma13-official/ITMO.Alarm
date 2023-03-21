@@ -315,7 +315,7 @@ class FullScheduleParser:
 
     @classmethod
     def starter(cls):
-        start = pc()
+        cls.start = pc()
         logging.basicConfig(level=logging.INFO, filename="py_log.log", filemode="w",
                             format="%(asctime)s %(levelname)s %(message)s")
 
@@ -340,6 +340,9 @@ class FullScheduleParser:
                 with open('for_full_schedule/for_check.json', 'w') as f:
                     json.dump(cls.for_check, f, indent=4)
                 sys.exit()
+
+
+FullScheduleParser().starter()
 
 # teachers_id = []
 # for_check = []
