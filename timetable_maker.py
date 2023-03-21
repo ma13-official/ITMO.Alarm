@@ -1,7 +1,6 @@
 from html_parser import *
 import json
-import datetime
-from bd.PostgresDB import PostgresDB
+from db.PostgresDB import PostgresDB
 
 
 class Lesson:

@@ -1,9 +1,10 @@
 import json
-import traceback
+import sys
+import threading
 import requests
 import logging
 from bs4 import BeautifulSoup
-from bd.PostgresDB import PostgresDB
+from time import perf_counter as pc
 
 
 class HTMLParser:
@@ -26,8 +27,9 @@ class HTMLParser:
         # Отправляем запрос к сайту и получаем ответ
         response = requests.get(url)
 
-        if response:
-            logging.info(f'Connected to {url}')
+        if not response:
+            logging.error(f'NOT connected to {url}!!!')
+            input()
 
         # Извлекаем HTML-код из ответа
         html = response.content
@@ -286,3 +288,64 @@ class HTMLParserInterface(HTMLParser):
 
 # HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
 # HTMLParserInterface.create_schedule()
+
+class FullScheduleParser:
+    aaa = 111
+
+    @classmethod
+    def parser(cls, i, aaa):
+        url = f'https://itmo.ru/ru/schedule/3/{i}/'
+        html = HTMLParser.get_html(url)
+        if not HTMLParser.check_html(html):
+            logging.warning(f'{i}    {pc() - cls.start}')
+            cls.teachers_id.append(i)
+        else:
+            logging.info(f'{i}    {pc() - cls.start}')
+            cls.for_check.remove(i)
+
+    @classmethod
+    def threads(cls, i):
+        threads = []
+        for x in range(8):
+            t = threading.Thread(target=cls.parser, args=(cls.for_check[i + x], cls.aaa))
+            threads.append(t)
+            t.start()
+        for t in threads:
+            t.join()
+
+    @classmethod
+    def starter(cls):
+        start = pc()
+        logging.basicConfig(level=logging.INFO, filename="py_log.log", filemode="w",
+                            format="%(asctime)s %(levelname)s %(message)s")
+
+        with open('for_full_schedule/teachers_id.json', 'r') as f:
+            cls.teachers_id = json.load(f)
+
+        with open('for_full_schedule/for_check.json', 'r') as f:
+            cls.for_check = json.load(f)
+
+        for i in range(0, len(cls.for_check), 8):
+            cls.threads(i)
+            try:
+                with open('for_full_schedule/teachers_id.json', 'w') as f:
+                    json.dump(cls.teachers_id, f, indent=4)
+
+                with open('for_full_schedule/for_check.json', 'w') as f:
+                    json.dump(cls.for_check, f, indent=4)
+            except KeyboardInterrupt:
+                with open('for_full_schedule/teachers_id.json', 'w') as f:
+                    json.dump(cls.teachers_id, f, indent=4)
+
+                with open('for_full_schedule/for_check.json', 'w') as f:
+                    json.dump(cls.for_check, f, indent=4)
+                sys.exit()
+
+# teachers_id = []
+# for_check = []
+# for i in r:
+#     if i[1]:
+#         teachers_id.append(i[0])
+#     else:
+#         for_check.append(i[0])
+#
