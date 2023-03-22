@@ -304,8 +304,8 @@ class FullScheduleParser:
                 cls.teachers_id.append(i)
             else:
                 logging.info(f'{i}    {pc() - cls.start}')
-
-            print(f'{i}    {pc() - cls.start}')
+            if i % 50 == 0:
+                print(f'{i}    {pc() - cls.start}')
 
     @classmethod
     def threads(cls, i):
@@ -331,18 +331,22 @@ class FullScheduleParser:
 
         # with open('for_full_schedule/for_check.json', 'r') as f:
         #     cls.for_check = json.load(f)
-        cls.for_check = list(range(200000, 500000))
-        cls.threads(cls.splitter(cls.for_check))
-        with open('for_full_schedule/teachers_id.json', 'w') as f:
-            json.dump(cls.teachers_id, f, indent=4)
+        for_check = list(range(200000, 500000))
+        for_check_parts = cls.splitter(for_check, 30)
+        checked = []
+        for part in for_check_parts:
+            cls.threads(cls.splitter(part, 8))
+            with open('for_full_schedule/teachers_id.json', 'w') as f:
+                json.dump(cls.teachers_id, f, indent=4)
 
-        with open('for_full_schedule/for_check.json', 'w') as f:
-            json.dump(cls.for_check, f, indent=4)
+            checked += part
+            with open('for_full_schedule/checked.json', 'w') as f:
+                json.dump(checked, f, indent=4)
 
     @staticmethod
-    def splitter(arr):
+    def splitter(arr, n):
         # Determine the size of each sub-array
-        subarray_size = len(arr) // 8
+        subarray_size = len(arr) // n
 
         # Create an empty list to hold the sub-arrays
         subarrays = []
