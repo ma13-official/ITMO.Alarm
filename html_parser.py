@@ -5,6 +5,8 @@ import requests
 import logging
 from bs4 import BeautifulSoup
 from time import perf_counter as pc
+import time
+from datetime import datetime
 
 
 class HTMLParser:
@@ -301,12 +303,13 @@ class FullScheduleParser:
             cls.teachers_id.append(i)
         else:
             logging.info(f'{i}    {pc() - cls.start}')
-            cls.for_check.remove(i)
+
+        print(f'{i}    {pc() - cls.start}')
 
     @classmethod
     def threads(cls, i):
         threads = []
-        for x in range(8):
+        for x in range(4):
             t = threading.Thread(target=cls.parser, args=(cls.for_check[i + x], cls.aaa))
             threads.append(t)
             t.start()
@@ -316,7 +319,10 @@ class FullScheduleParser:
     @classmethod
     def starter(cls):
         cls.start = pc()
-        logging.basicConfig(level=logging.INFO, filename="py_log.log", filemode="w",
+        now = datetime.now()
+        date = now.date()
+        time = str(now.time())[:5]
+        logging.basicConfig(level=logging.INFO, filename=f"logs\{date}_{time}.log", filemode="w",
                             format="%(asctime)s %(levelname)s %(message)s")
 
         with open('for_full_schedule/teachers_id.json', 'r') as f:
@@ -324,9 +330,10 @@ class FullScheduleParser:
 
         with open('for_full_schedule/for_check.json', 'r') as f:
             cls.for_check = json.load(f)
-
-        for i in range(0, len(cls.for_check), 8):
+        for i in range(0, len(cls.for_check)):
             cls.threads(i)
+            for j in range(4):
+                cls.for_check.pop(i+j)
             try:
                 with open('for_full_schedule/teachers_id.json', 'w') as f:
                     json.dump(cls.teachers_id, f, indent=4)
@@ -341,8 +348,14 @@ class FullScheduleParser:
                     json.dump(cls.for_check, f, indent=4)
                 sys.exit()
 
+while True:
+    try:
+        FullScheduleParser().starter()
+    except KeyboardInterrupt:
+        break
+    except:
+        pass
 
-FullScheduleParser().starter()
 
 # teachers_id = []
 # for_check = []
@@ -352,3 +365,25 @@ FullScheduleParser().starter()
 #     else:
 #         for_check.append(i[0])
 #
+
+
+# with open('for_full_schedule/teachers_id.json', 'r') as f:
+#     teachers_id = json.load(f)
+#
+# with open('for_full_schedule/teachers_id1.json', 'r') as f:
+#     teachers_id += json.load(f)
+#
+# with open('for_full_schedule/for_check.json', 'r') as f:
+#     for_check = json.load(f)
+#
+# with open('for_full_schedule/for_check1.json', 'r') as f:
+#     for_check += json.load(f)
+#
+# teachers_id = sorted(list(set(teachers_id)))
+# for_check = sorted(list(set(for_check)))
+#
+# with open('for_full_schedule/teachers_id.json', 'w') as f:
+#     json.dump(teachers_id, f, indent=4)
+#
+# with open('for_full_schedule/for_check.json', 'w') as f:
+#     json.dump(for_check, f, indent=4)
