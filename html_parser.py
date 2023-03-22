@@ -295,22 +295,23 @@ class FullScheduleParser:
     aaa = 111
 
     @classmethod
-    def parser(cls, i, aaa):
-        url = f'https://itmo.ru/ru/schedule/3/{i}/'
-        html = HTMLParser.get_html(url)
-        if not HTMLParser.check_html(html):
-            logging.warning(f'{i}    {pc() - cls.start}')
-            cls.teachers_id.append(i)
-        else:
-            logging.info(f'{i}    {pc() - cls.start}')
+    def parser(cls, arr, aaa):
+        for i in arr:
+            url = f'https://itmo.ru/ru/schedule/3/{i}/'
+            html = HTMLParser.get_html(url)
+            if not HTMLParser.check_html(html):
+                logging.warning(f'{i}    {pc() - cls.start}')
+                cls.teachers_id.append(i)
+            else:
+                logging.info(f'{i}    {pc() - cls.start}')
 
-        print(f'{i}    {pc() - cls.start}')
+            print(f'{i}    {pc() - cls.start}')
 
     @classmethod
     def threads(cls, i):
         threads = []
-        for x in range(4):
-            t = threading.Thread(target=cls.parser, args=(cls.for_check[i + x], cls.aaa))
+        for x in range(8):
+            t = threading.Thread(target=cls.parser, args=(i[x], cls.aaa))
             threads.append(t)
             t.start()
         for t in threads:
@@ -321,40 +322,46 @@ class FullScheduleParser:
         cls.start = pc()
         now = datetime.now()
         date = now.date()
-        time = str(now.time())[:5]
+        time = str(now.time())[:2] + str(now.time())[3:5]
         logging.basicConfig(level=logging.INFO, filename=f"logs\{date}_{time}.log", filemode="w",
                             format="%(asctime)s %(levelname)s %(message)s")
 
         with open('for_full_schedule/teachers_id.json', 'r') as f:
             cls.teachers_id = json.load(f)
 
-        with open('for_full_schedule/for_check.json', 'r') as f:
-            cls.for_check = json.load(f)
-        for i in range(0, len(cls.for_check)):
-            cls.threads(i)
-            for j in range(4):
-                cls.for_check.pop(i+j)
-            try:
-                with open('for_full_schedule/teachers_id.json', 'w') as f:
-                    json.dump(cls.teachers_id, f, indent=4)
+        # with open('for_full_schedule/for_check.json', 'r') as f:
+        #     cls.for_check = json.load(f)
+        cls.for_check = list(range(0, 100000))
+        cls.threads(cls.splitter(cls.for_check))
+        with open('for_full_schedule/teachers_id.json', 'w') as f:
+            json.dump(cls.teachers_id, f, indent=4)
 
-                with open('for_full_schedule/for_check.json', 'w') as f:
-                    json.dump(cls.for_check, f, indent=4)
-            except KeyboardInterrupt:
-                with open('for_full_schedule/teachers_id.json', 'w') as f:
-                    json.dump(cls.teachers_id, f, indent=4)
+        with open('for_full_schedule/for_check.json', 'w') as f:
+            json.dump(cls.for_check, f, indent=4)
 
-                with open('for_full_schedule/for_check.json', 'w') as f:
-                    json.dump(cls.for_check, f, indent=4)
-                sys.exit()
+    @staticmethod
+    def splitter(arr):
+        # Determine the size of each sub-array
+        subarray_size = len(arr) // 8
 
-while True:
-    try:
-        FullScheduleParser().starter()
-    except KeyboardInterrupt:
-        break
-    except:
-        pass
+        # Create an empty list to hold the sub-arrays
+        subarrays = []
+
+        # Iterate through the original array and extract sub-arrays
+        for i in range(0, len(arr), subarray_size):
+            subarrays.append(arr[i:i + subarray_size])
+
+        # Print the resulting sub-arrays
+        return subarrays
+
+# while True:
+#     try:
+FullScheduleParser().starter()
+    # except KeyboardInterrupt:
+    #     break
+    # except Exception as e:
+    #     logging.error(str(e))
+    #     pass
 
 
 # teachers_id = []
@@ -370,20 +377,25 @@ while True:
 # with open('for_full_schedule/teachers_id.json', 'r') as f:
 #     teachers_id = json.load(f)
 #
-# with open('for_full_schedule/teachers_id1.json', 'r') as f:
-#     teachers_id += json.load(f)
-#
+# with open('for_full_schedule/teachers_id1.json', 'r') as f1:
+#     teachers_id += json.load(f1)
+
 # with open('for_full_schedule/for_check.json', 'r') as f:
 #     for_check = json.load(f)
 #
 # with open('for_full_schedule/for_check1.json', 'r') as f:
-#     for_check += json.load(f)
-#
+#     for_check1 = json.load(f)
+
 # teachers_id = sorted(list(set(teachers_id)))
+# out = []
+# for i in for_check:
+#     if i in for_check1:
+#         out.append(i)
+
 # for_check = sorted(list(set(for_check)))
 #
 # with open('for_full_schedule/teachers_id.json', 'w') as f:
 #     json.dump(teachers_id, f, indent=4)
-#
+
 # with open('for_full_schedule/for_check.json', 'w') as f:
-#     json.dump(for_check, f, indent=4)
+#     json.dump(out, f, indent=4)
