@@ -310,7 +310,7 @@ class FullScheduleParser:
     @classmethod
     def threads(cls, i):
         threads = []
-        for x in range(8):
+        for x in range(len(i)):
             t = threading.Thread(target=cls.parser, args=(i[x], cls.aaa))
             threads.append(t)
             t.start()
@@ -323,7 +323,7 @@ class FullScheduleParser:
         now = datetime.now()
         date = now.date()
         time = str(now.time())[:2] + str(now.time())[3:5]
-        logging.basicConfig(level=logging.INFO, filename=f"logs\{date}_{time}.log", filemode="w",
+        logging.basicConfig(level=logging.INFO, filename=f"logs/{date}_{time}.log", filemode="w",
                             format="%(asctime)s %(levelname)s %(message)s")
 
         with open('for_full_schedule/teachers_id.json', 'r') as f:
@@ -331,11 +331,11 @@ class FullScheduleParser:
 
         # with open('for_full_schedule/for_check.json', 'r') as f:
         #     cls.for_check = json.load(f)
-        for_check = list(range(200000, 500000))
-        for_check_parts = cls.splitter(for_check, 30)
-        checked = []
+        for_check = list(range(135000, 200000))
+        for_check_parts = cls.splitter(for_check, 13)
+        checked = list(range(100000, 135000))
         for part in for_check_parts:
-            cls.threads(cls.splitter(part, 8))
+            cls.threads(cls.splitter(part, 4))
             with open('for_full_schedule/teachers_id.json', 'w') as f:
                 json.dump(cls.teachers_id, f, indent=4)
 
