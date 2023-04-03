@@ -35,7 +35,9 @@ class HTMLParser:
 
         # Извлекаем HTML-код из ответа
         html = response.content
-
+        # print(html)
+        # with open('123.html', 'w', encoding='utf-8') as f:
+        #     f.write(html.decode())
         return html
 
     @staticmethod
@@ -62,20 +64,25 @@ class HTMLParser:
         # создать объект BeautifulSoup
         soup = BeautifulSoup(html, 'html.parser')
 
+        # print(soup)
+
         # найти все таблицы с классом "rasp-tabl-day"
         day_tables = soup.find_all('table', {'class': 'rasp_tabl'})
 
         schedule_week = soup.find('h2', {'class': 'schedule-week'})
+        s = soup.find('h1', {'class': 'page-header'}).text
+        teacher_surname = s[s.find("(") + 1:s.find(")")]
+
         if schedule_week is not None:
             cur_week = ''.join(
                 filter(str.isdigit, schedule_week.text.split('.')[1]))  # оставить только номер текущей недели
         else:
             cur_week = ''
 
-        return day_tables, cur_week
+        return day_tables, cur_week, teacher_surname
 
     @staticmethod
-    def day_tables_work(day_tables, teacher_schedule_check=False, number='', teacher=''):
+    def day_tables_work(day_tables, teacher_schedule_check=False, found_with_number=False, number='', teacher=''):
         # создать список для хранения данных
         data = []
 
@@ -116,6 +123,12 @@ class HTMLParser:
                 else:
                     room_field_parsed = ['', '']
 
+                group_field = row.find('td', {'class': False})
+                if group_field is not None:
+                    group = group_field.text.strip()
+                else:
+                    group = ''
+
                 lesson_field = row.find('td', {'class': 'lesson'})
                 if lesson_field is not None:
                     lesson_field_parsed = list(map(str.strip, lesson_field.text.strip().split('\n')))
@@ -128,31 +141,42 @@ class HTMLParser:
                 else:
                     lesson_format_parsed = ''
 
-                if teacher_schedule_check:
+                if teacher_schedule_check and found_with_number:
                     group = row.find('td', {'class': False}).text.strip()
                     if group != number:
                         continue
 
                 # создать словарь с данными
                 time = time_field_parsed[0].strip()
-                weeks = time_field_parsed[1].strip()
+                try:
+                    weeks = time_field_parsed[1].strip()
+                except IndexError:
+                    weeks = ''
                 type_week = lesson_field_parsed[0].split(')')[1].strip()
                 room = room_field_parsed[0].strip()
+                if room == '':
+                    room = type_week
                 address = room_field_parsed[1].strip()
                 lesson = lesson_field_parsed[0].split('(')[0].strip()
                 type_lesson = lesson_field_parsed[0].split('(')[1].split(')')[0].strip()  # достаем то, что в скобках
                 if not teacher_schedule_check:
                     teacher = lesson_field_parsed[1].strip()
 
-                item = {'day': day, 'time': time, 'weeks': weeks, 'type_week': type_week, 'room': room,
+                item = {'day': day, 'time': time, 'weeks': weeks, 'group': group, 'room': room,
                         'address': address, 'lesson': lesson, 'type_lesson': type_lesson, 'teacher': teacher,
                         'lesson_format': lesson_format_parsed}
+
+                for i in item.values():
+                    if i != '':
+                        break
+                else:
+                    continue
 
                 # добавить словарь в список
                 data.append(item)
                 pass
 
-        logging.info('Parsed HTML to JSON.')
+        # logging.info('Parsed HTML to JSON.')
         return list({tuple(d.items()): d for d in data}.values())
 
     @staticmethod
@@ -207,7 +231,7 @@ class HTMLParserInterface(HTMLParser):
         schedule_html = cls.get_teacher_schedule_html(html)
         day_tables, cur_week_number = cls.get_day_tables(schedule_html)
         # print(day_tables)
-        data = cls.day_tables_work(day_tables, True, number, teacher)
+        data = cls.day_tables_work(day_tables)
         # print(data)
         # data = [f'Пример запроса с параметрами {teacher} и {number}'] + data
         return data
@@ -241,6 +265,38 @@ class HTMLParserInterface(HTMLParser):
             number = cls.get_input('поток', teacher)
             data += cls.get_schedule_tn(teacher, number)
         cls.save_json(data, 'test1.json')
+
+    @classmethod
+    def full_schedule_parser(cls):
+        now = datetime.now()
+        date = now.date()
+        time = str(now.time())[:2] + str(now.time())[3:5]
+        logging.basicConfig(level=logging.INFO, filename=f"logs/{date}_{time}.log", filemode="w",
+                            format="%(asctime)s %(levelname)s %(message)s")
+
+        with open('for_full_schedule/teachers_id.json') as f:
+            teachers_id = json.load(f)
+
+        with open('full_schedule.json', 'r', encoding='utf-8') as f:
+            full_schedule = json.load(f)
+
+        for i in teachers_id:
+            url = f'https://itmo.ru/ru/schedule/3/{i}/'
+            html = cls.get_html(url)
+            if HTMLParser.check_html(html):
+                logging.warning(f'{i}   {teachers_id.index(i)}')
+                continue
+            else:
+                logging.info(f'{i}   {teachers_id.index(i)}')
+            # schedule_html = cls.get_teacher_schedule_html(html)
+            day_tables, cur_week_number, teachers_surname = cls.get_day_tables(html)
+            # print(day_tables)
+            data = cls.day_tables_work(day_tables, True)
+            full_schedule[teachers_surname] = data
+
+            # print(full_schedule)
+            with open('full_schedule.json', 'w', encoding='utf-8') as f:
+                json.dump(full_schedule, f, indent=4, ensure_ascii=False)
 
     @classmethod
     def get_input(cls, template, teacher=''):
@@ -290,6 +346,9 @@ class HTMLParserInterface(HTMLParser):
 
 # HTMLParser_Interface.get_schedule_tn('Калинникова', 'АЯ-B1.2/13')
 # HTMLParserInterface.create_schedule()
+
+# HTMLParserInterface.full_schedule_parser()
+
 
 class FullScheduleParser:
     aaa = 111
@@ -358,14 +417,55 @@ class FullScheduleParser:
         # Print the resulting sub-arrays
         return subarrays
 
+    @staticmethod
+    def new_schedule_structure():
+        with open('new_full_schedule1.json', encoding='utf-8') as f:
+            prev = json.load(f)
+
+        new = dict()
+        for teacher, teacher_schedule in prev.items():
+            for lesson in teacher_schedule:
+                group = lesson.pop('group')
+                if group in new.keys():
+                    new[group].append(lesson)
+                else:
+                    new[group] = [lesson]
+
+        with open('new_full_schedule.json', 'w', encoding='utf-8') as f:
+            json.dump(dict(sorted(new.items())), f, indent=4, ensure_ascii=False)
+
+    @staticmethod
+    def schedule_by_day():
+        days = {'Пн': 'mon', 'Вт': 'tue', 'Ср': 'wed', 'Чт': 'thu', 'Пт': 'fri', 'Сб': 'sat', 'Вс': 'sun'}
+
+        with open('json_templates/schedule_group.json', encoding='utf-8') as f:
+            prev = json.load(f)
+
+        for teacher, teacher_schedule in prev.items():
+            schedule_by_day = dict()
+            for lesson in teacher_schedule:
+                day = lesson.pop('day')
+                if day in days.keys():
+                    day = days[day]
+                if day in schedule_by_day.keys():
+                    schedule_by_day[day].append(lesson)
+                else:
+                    schedule_by_day[day] = [lesson]
+            prev[teacher] = schedule_by_day
+
+        with open('json_templates/schedule_group_day.json', 'w', encoding='utf-8') as f:
+            json.dump(dict(sorted(prev.items())), f, indent=4, ensure_ascii=False)
+
+
+FullScheduleParser.schedule_by_day()
 # while True:
 #     try:
-FullScheduleParser().starter()
-    # except KeyboardInterrupt:
-    #     break
-    # except Exception as e:
-    #     logging.error(str(e))
-    #     pass
+# FullScheduleParser().starter()
+# except KeyboardInterrupt:
+#     break
+# except Exception as e:
+#     logging.error(str(e))
+#     pass
 
 
 # teachers_id = []
