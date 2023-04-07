@@ -1,3 +1,4 @@
+from dialogic import COMMANDS
 from dialogic.cascade import DialogTurn, Cascade
 from dialogic.dialog_connector import DialogConnector
 from dialogic.dialog_manager import TurnDialogManager
@@ -8,25 +9,19 @@ import html_parser
 csc = Cascade()
 
 
-# def is_single_pass(turn: DialogTurn) -> bool:
-#     """ Check that a command is passed when the skill is activated """
-#     if not turn.ctx.yandex:
-#         return False
-#     if not turn.ctx.yandex.session.new:
-#         return False
-#     return bool(turn.ctx.yandex.request.command)
-
-
 def is_new_session(turn: DialogTurn):
     return turn.ctx.session_is_new() or not turn.text
 
 
+def is_not_new_session(turn: DialogTurn):
+    return not turn.ctx.session_is_new()
+
+
 @csc.add_handler(priority=1, intents=['help'])
 def do_help(turn: DialogTurn):
-
-    turn.response_text = 'Помогаю! Вы в навыке ITMO Alarm, который поможет вам настроить будильники под ваше учебное расписание. ' \
+    turn.response_text = 'Помогаю! Вы в навыке ITMO Schedule, который поможет вам быстро узнать ваше расписание в определенный день. ' \
                          'Назовите вашу учебную группу, а я начну строить ваше расписание' \
-                         '\nЧтобы выйти, скажите "Алиса, стоп".' + str(turn.ctx.user_id)
+                         '\nЧтобы выйти, скажите "Алиса, стоп".'
     turn.suggests.append('Выход')
 
 
@@ -35,7 +30,7 @@ def do_help(turn: DialogTurn):
 @csc.add_handler(priority=3, checker=is_new_session)
 def hello(turn: DialogTurn):
     turn.next_stage = 'group'
-    turn.response_text = 'Привет! Вы в навыке ITMO Alarm, который поможет вам настроить будильники под ваше учебное расписание. ' \
+    turn.response_text = 'Привет! Вы в навыке ITMO Schedule, который поможет вам быстро узнать ваше расписание в определенный день. ' \
                          'Назовите вашу учебную группу, а я начну строить ваше расписание.'
     turn.suggests.append('Выход')
 
@@ -61,7 +56,7 @@ def stop_do_schedule_after_group(turn: DialogTurn):
 
 @csc.add_handler(priority=10, intents=['not_from_itmo'])
 def answer_not_itmo_student(turn: DialogTurn):
-    turn.response_text = 'Извините, я умею ставить будильники только для студентов университета ИТМО.'
+    turn.response_text = 'Извините, я умею формировать расписание только для студентов университета ИТМО.'
     turn.suggests.append('Выход')
 
 
@@ -87,8 +82,34 @@ def stop_do_schedule_at_stream(turn: DialogTurn):
 def total_exit(turn: DialogTurn):
     turn.response_text = 'Была рада помочь! ' \
                          'Чтобы обратиться ко мне снова,' \
-                         'запустите навык "ITMO.Alarm"'
-    # turn.commands.append(COMMANDS.EXIT)
+                         'запустите навык "ITMO Schedule"'
+    turn.commands.append(COMMANDS.EXIT)
+
+
+@csc.add_handler(priority=10, intents=['schedule'], checker=is_not_new_session())
+def say_schedule(turn: DialogTurn):
+    request_text = turn.text
+    request_text.split()
+    date = request_text[:-3]
+    if date:
+        turn.response_text = 'У вас во вторник такого-то числа n пар в корпусе *корпус*.' \
+                             ' *перечисление пар*: время + предмет + тип предмета'
+    else:
+        turn.response_text = 'У вас завтра нет пар'
+
+    turn.commands.append(COMMANDS.EXIT)
+
+
+@csc.add_handler(priority=10, intents=['teacher'], checker=is_not_new_session())
+def say_where_teacher(turn: DialogTurn):
+    request_text = turn.text
+    request_text.split()
+    full_name = request_text[:-3]
+    if full_name:
+        turn.response_text = full_name + ' ведет *тип предмета* по *название предмета* в *корпус*, *аудитория*'
+    else:
+        turn.response_text = 'Я не знаю такого преподавателя'
+    turn.commands.append(COMMANDS.EXIT)
 
 
 @csc.add_handler(priority=1)
