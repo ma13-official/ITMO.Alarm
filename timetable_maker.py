@@ -80,6 +80,6 @@ class TimeTable:
         # HTMLParser.save_json(output, 'test.json')
 
 
-test = TimeTable("K32201", 6, "123")
-test.input_data()
-test.output_data("123")
+# test = TimeTable("K32201", 6, "123")
+# test.input_data()
+# test.output_data("123")

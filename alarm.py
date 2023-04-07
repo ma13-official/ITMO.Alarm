@@ -131,7 +131,7 @@ class Alarm:
 
 
 
-test = Alarm(id="12345")
-test.dump_json("test_alarm.json")
+# test = Alarm(id="12345")
+# test.dump_json("test_alarm.json")
 
 

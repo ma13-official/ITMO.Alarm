@@ -342,7 +342,7 @@ class FullScheduleParser:
                 sys.exit()
 
 
-FullScheduleParser().starter()
+# FullScheduleParser().starter()
 
 # teachers_id = []
 # for_check = []
