@@ -4,7 +4,7 @@ from dialogic.dialog_connector import DialogConnector
 from dialogic.dialog_manager import TurnDialogManager
 from dialogic.server.flask_server import FlaskServer
 
-import html_parser
+#import html_parser
 
 csc = Cascade()
 
@@ -17,7 +17,7 @@ def is_not_new_session(turn: DialogTurn):
     return not turn.ctx.session_is_new()
 
 
-@csc.add_handler(priority=1, intents=['help'])
+@csc.add_handler(priority=1, intents=['help'], stages=['group', 'stop', 'stream', 'next_stream'])
 def do_help(turn: DialogTurn):
     turn.response_text = 'Помогаю! Вы в навыке ITMO Schedule, который поможет вам быстро узнать ваше расписание в определенный день. ' \
                          'Назовите вашу учебную группу, а я начну строить ваше расписание' \
@@ -35,16 +35,16 @@ def hello(turn: DialogTurn):
     turn.suggests.append('Выход')
 
 
-@csc.add_handler(priority=10, intents=['stop'], stages=['group'])
+@csc.add_handler(priority=100, intents=['stop'], stages=['group'])
 def stop_do_schedule_before_group(turn: DialogTurn):
     turn.response_text = 'Расписание сформировано без учета предметов по выбору.'
 
 
-@csc.add_handler(priority=10, intents=['group'])
+@csc.add_handler(priority=10, regexp='(Моя\s+группа\s+-\s*[\w\d]+|\bгруппа\s*[\w\d]+|\bя\s+в\s+группе\s+[\w\d]+|\s*[\w\d]+\s*)', stages=['group'])
 def add_group(turn: DialogTurn):
     turn.next_stage = 'stream'
 
-    html_parser.HTMLParserInterface().get_schedule_n("K32201")
+    #html_parser.HTMLParserInterface().get_schedule_n("K32201")
     turn.response_text = 'Отлично, я добавила основные предметы. Давайте разберемся с предметами по выбору. ' \
                          'Вы мне называете поток, а я отвечаю, нашла ли его в расписании. Приступим:'
 
@@ -60,7 +60,7 @@ def answer_not_itmo_student(turn: DialogTurn):
     turn.suggests.append('Выход')
 
 
-@csc.add_handler(priority=10, intents=['stream'])
+@csc.add_handler(priority=10, regexp='(Мой\s+поток\s+-\s*[\w\d.]+|\bпоток\s*[\w\d.]+|\bя\s+на\s+потоке\s+[\w\d.]+|\s*[\w\d.]+\s*)', stages=['stream'])
 def add_stream(turn: DialogTurn):
     turn.next_stage = 'next_stream'
     turn.response_text = 'Поток найден. Добавила в расписание. Продолжить?'
@@ -86,7 +86,8 @@ def total_exit(turn: DialogTurn):
     turn.commands.append(COMMANDS.EXIT)
 
 
-@csc.add_handler(priority=10, intents=['schedule'], checker=is_not_new_session())
+@csc.add_handler(priority=10, intents=['schedule'])
+@csc.add_handler(priority=1, checker=is_not_new_session)
 def say_schedule(turn: DialogTurn):
     request_text = turn.text
     request_text.split()
@@ -97,10 +98,11 @@ def say_schedule(turn: DialogTurn):
     else:
         turn.response_text = 'У вас завтра нет пар'
 
-    turn.commands.append(COMMANDS.EXIT)
+    # turn.commands.append(COMMANDS.EXIT)
 
 
-@csc.add_handler(priority=10, intents=['teacher'], checker=is_not_new_session())
+@csc.add_handler(priority=10, intents=['teacher'])
+@csc.add_handler(priority=1, checker=is_not_new_session)
 def say_where_teacher(turn: DialogTurn):
     request_text = turn.text
     request_text.split()
@@ -109,7 +111,7 @@ def say_where_teacher(turn: DialogTurn):
         turn.response_text = full_name + ' ведет *тип предмета* по *название предмета* в *корпус*, *аудитория*'
     else:
         turn.response_text = 'Я не знаю такого преподавателя'
-    turn.commands.append(COMMANDS.EXIT)
+    # turn.commands.append(COMMANDS.EXIT)
 
 
 @csc.add_handler(priority=1)
